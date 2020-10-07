@@ -5,48 +5,128 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.ExtractedText;
+import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 
 public class KhmerKeyboard extends InputMethodService {
+
+    int emoLayoutNum = 0;
+    StringBuffer inputString = new StringBuffer();
+
+
+
     public KhmerKeyboard() {
     }
 
+    String[][] emojis = {
+            {"😀","😃","😄","😁","😆","😅","😂","🤣","😭","😗",
+                    "😙","😚","😘","🥰","😍","🤩","🥳","🤗","🙃",
+                    "🙂","☺️","😊","😏","😌","😉","🤭","😶","😐","😑",
+                    "😔","😋","😛","😝","😜","🤪","🤔","🤨","🧐","🙄","😒","😤",
+                    "😠","😡","🤬","☹️","🙁","😕","😟","🥺","😬","😳","🤐","🤫","😰",
+                    "😨","😧","😦","😮","😯","😲"
+            },
+            {
+                "😱","🤯","😢","😥","😓","😞","😖","😣","😩","😫","😵","🤤","🥱","😴","😪","🌛","🌜","🌚","🌝","🌞","🤢","🤮",
+            "🤧","😷","🤒","🤕","🥴","🥵","🥶","😈","👿","😇","🤠","🤑","😎","🤓","🤥","🤡","👻","💩","👽","🤖","🎃","👹",
+            "☠️","😺","😸","😹","😻","😼","😽","🙀","😿","😾","❤️","🧡","💛","💚","💙","💜"
+            },
+            {
+                "🤎","🖤","🤍","♥️","💘","💝","💖","💗","💓","💞","💕","💌","💟","❣️","💔","💋",
+                    "🔥","💫","⭐️","🌟","✨","⚡️","💥","💯","💢","💨","💦","💤","🕳","👥","👤",
+                    "🗣","🧠","🩸","🦠","🦷","🦴","💀","👀","👁","👄","👅","👃","👂","🦻","🦶","🦵",
+                    "🦿","🦾","💪","👍","👎","👏","🙌","👐","🤲","🤝","🤜","🤛","✊"
+            },
+            {
+                "👊","🖐","✋","🤚","👋","🤏","👌","✌️","🤘","🤟","🤙","🤞","🖕","🖖","☝️","👆","👇","👉","👈","✍️","🤳","🙏","💅",
+                    "🛑","🚧","🚥","🚦","🚨","⛽️","🛢️","🧭","⚓️","🏍️","🛵","🚲","🦼","🦽","🛴","🛹","🚇","🚏","🚙","🚗","🚐","🚚",
+                    "🚛","🚜","🏎️","🚒","🚑","🚓","🚕","🛺","🚌","🚈","🚝","🚅","🚄","🚂","🚘"
+            },
+            {
+                "🚔","🚍","🚉","🚊","🚞","🚎","🚋","🚃","🚖","🚆","🚢","🛳️","🛥️","🚤","⛴️","⛵️",
+                    "🛶","🛫","✈️","🛩️","🚀","🛸","🚁","🚡","🚠","🚟","🛬","🎢","🎡","🎠","🎪",
+                    "🗼","🗽","🗿","💈","💒","⛪️","🛕","🕋","🕌","🕍","⛩️","⛲️","🏛️","🏩",
+                    "🏯","🏰","🏗️","🏢","🏭","🏬","🏪","🏟️","🏡","🏠","🏚️","🏥","🏤","🏣","🏨"
+            },
+            {
+                "🏫","🏦","🏘️","⛺️","🏕️","🌅","🌄","🌇","🌁","🏙️","🌆","🏜️","🏞️","🗻","🌋","⛰️"
+                    ,"🏔️","🌉","🌌","🌃","🏖️","⛱️","🏝️","🛤️","🛣️","🗺️","🗾","🌐","💺","🧳","🎉"
+                    ,"🎊","🎈","🎂","🎀","🎁","🎇","🎆","🧨","🎄","🎋","🎍","🎑","🎎","🎏","🎐","🪔"
+                    ,"🧧","🎃","🎗","🥇","🥈","🥉","🏅","🎖","🏆","📢","🥅","⚽️","⚾️"
+            },
+            {
+                "🥎","🏀","🏐","🏈","🏉","🎾","🏸","🥍","🏏","🏑","🏒","🥌","🛷","🎿","⛸","🩰","⛳️","🎯","🏹","🥏",
+                    "🪁","🎣","🤿","🩱","🎽","🥋","🥊","🎱","🏓","🎳","♟","🪀","🧩","🎮","🕹","👾","🔫","🎲","🎰","🎴"
+                    ,"🀄️","🃏","🎩","📷","📸","🖼","🎨","🖌","🖍","🧵","🧶","🎼","🎵","🎶","🎹","🎷","🎺","🎸","🪕","🎻"
+            },
+            {
+                    "🥁","🎤","🎧","🎚","🎛","🎙","📻","📺","📼","📹","📽","🎥","🎞","🎬","🎭","🎫","🎟","❤️",
+                    "🧡","💛","💚","💙","💜","🤎","🖤","🤍","🔴","🟠","🟡","🟢","🔵","🟣","🟤","⚫️",
+                    "⚪️","🟥","🟧","🟨","🟩","🟦","🟪","🟫","⬛️","♈️","♉️","♊️","♋️",
+                    "⭕️","❌","🚫","🚳","🚭","🚯","🚱","🚷","📵","🔞","🔕","🔇","🅰️"
+            },
+            {
+              "🆎","🅱️","🆑","🅾️","🆘","🛑","⛔️","📛","♨️","🉐","㊙️","㊗️","🈴","🈵","🈹","🈲"
+                    ,"🉑","🈶","🈚️","🈸","🈺","🈷️","🔶","🔸","✴️","🆚","🎦","📶","🔁","🔂","🔀","▶️",
+                    "⏩","⏭️","⏯️","◀️","⏪","⏮️","🔼","⏫","🔽","⏬","⏸️","⏹️","⏺️","⏏️","🔆","🔅","📲","📳","📴"
+                    ,"🔈","🔉","🔊","🎵","🎶","🎼","☢️","☣️","⚠️"
+            },
+            {
+                    "🚸","⚜️","🔱","〽️","🔰","✳️","❇️","♻️","💱","💲","💹","🈯️","❎","✅","✔️",
+                    "☑️","⬆️","↗️","➡️","↘️","⬇️","↙️","⬅️","↖️","↕️","↔️","↩️",
+                    "↪️","⤴️","⤵️","🔃","🔄","🔙","🔛","🔝","🔚","🔜","🆕","🆓","🆙","🆗","🆒","🆖","🈁","🈂️",
+                    "🈳","🔣","🔤","🔠","🔡","🔢","#️⃣","*️⃣","0️⃣","1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣"
+            },
+            {
+                    "7️⃣","8️⃣","9️⃣","🔟","🏧","⚕️","💠","🔷","🔹","🌐","Ⓜ️","ℹ️","🅿️","🚾","🗣️",
+                    "👤","👥","👣","🐾","🚻","🚹","♿️","🚼","🚮","🚰","🛂","🛃","🛄","🛅","👁️‍🗨️","💟","🛐",
+                    "🕉️","☸️","☮️","☯️","✝️","✝️","☦️","✡️","🔯","🕎","♾️","🆔","©️",
+                    "®️","™️","✖️","➕","➖","➗","➰","➿","〰️","♥️","♦️","♣️","♠️","🔳",
+                    "◼️"
+            },
+            {
+                    "◾️","▪️","🔲","◻️","◽️","▫️","💭","🗯️","💬","🗨️","🔘","📱","📲","☎️",
+                    "📞","📟","📠","🔌","🔋","🖲️","💽","💾","💿","📀","🖥️","💻","⌨️","🖨️","🖱️","🏧",
+                    "💸","💵","💴","💶","💷","💳","💰","🧾","🧮","⚖️","🛒","🛍️","🕯️","💡","🔦","🏮",
+                    "🧱","🚪","🪑","🛏️","🛋️","🚿","🛁","🚽","🧻","🧸","🧷","🧹","🧴","🧽"
+            },
+            {
+                    "🧼","🪒","🧺","🧦","🧤","🧣","👖","👕","🎽","👚","👔","👗","👘","🥻","🩱","👙","🩳",
+                    "🩲","🧥","🥼","👛","⛑️","🎓","🎩","👒","🧢","👑","🎒","👝","👛","👜","💼","🧳","☂️"
+                    ,"🌂","💍","💎","💄","👠","👟","👞","🥿","👡","👢","🥾","👓","🕶️","🦯","🥽","⚗️","🧫","🧪",
+                    "🌡️","🧬","💉","💊","🩹","🩺","🔬","🔭"
+            },
 
-    String[] secondLayoutChars = {"!","១","ៗ","២","៖","៣","៛","៤","៎","៥","៍","៦","័","៧","៏","៨","៝","៩","៊","០"
-            ,"1","ឥ","2","ឦ","3","ឧ","4","ឩ","5","ឪ","6","ឫ","7","ឬ","8","ឭ","9","ឮ","៕","ឯ","ឱ","ឰ",
-            "@",".","#",",","$",":","%","+","\\","-","&","_","*","/","(","|",")","="};
+
+            {
+                    "📡","🛰️","🧯","🪓","🧲","🧰","🗜️","🔩","🔧","🔨","⚒️","🛠️","⛏️","⚙️","🔗","⛓️",
+                    "📎","🖇️","📏","📐","✂️","📌","📍","🗑️","🖌️","🖍️","🖊️","🖋️","✒️","✏️","📝","📒","📔",
+                    "📕","📓","📗","📘","📙","📚","📖","🔖","🗒️","📄","📃","📋","📇","📑","🗃️","🗄️","🗂️","📂","📁","📰",
+                    "🗞️","📊","📈","📉","📦","📫","📪"
+
+            },
+            {
+                    "📬","📭","📮","✉️","📧","📩","📨","💌","📤","📥","🗳️","🏷️","⌛️","⏳","🕰️","🕛","🕧","🕐","🕜",
+                    "🕑","🕝","🕒","🕞","🕓","🕟","🕔","🕠","🕕","🕡","🕖","🕢","🕗","🕣","🕘","🕤","🕙","🕥","🕚","🕦","⏱️",
+                    "⌚️","⏲️","⏰","🗓️","📅","🛎️","🛎️","🔔","📯","📢","📣","🔍","🔎","🔮","🧿","📿","🏺","⚱️","⚰️","🚬"
+            },
+    };
 
 
+    String[] charAll = {"១","២","៣","៤","៥","៦","៧","៨","៩","០","ឥ","ឦ","ឲ","ឪ",
+            "ឈ","ឆ","ឺ","ឹ","ែ","េ","ឬ","ឬ","ទ","ត","ួ","យ","ូ","ុ","ី","ិ","ៅ","ោ","ភ","ផ","ឿ","ៀ","ឧ","ឪ",
+            "ាំ","ា","ៃ","ស","ឌ","ដ","ធ","ថ","អ","ង","ះ","ហ","ញ","្","គ","ក","ឡ","ល","ើ","ោះ","៉","់","ឭ","ឮ",
+            "ឍ","ឋ","ឃ","ខ","ជ","ច","េះ","វ","ព","ប","ណ","ន","ំ","ម","ុះ","ុំ","។","៕","?","៊"};
 
-    String[] firstLayoutChars = {"ឈ","ឆ","ឺ","ឹ","ែ","េ","ឬ","ឬ","ទ","ត","ួ","យ","ូ","ុ","ី","ិ","ៅ","ោ","ភ","ផ",
-            "ាំ","ា","ៃ","ស","ឌ","ដ","ធ","ថ","អ","ង","ះ","ហ","ញ","្","គ","ក","ឡ","ល","៉","់",
-            "ឍ","ឋ","ឃ","ខ","ជ","ច","េះ","វ","ព","ប","ណ","ន","ំ","ម","ុះ","ុំ","ឿ","ៀ","ើ","ោះ"};
-
-    String[] firstEmoji = {"😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","","😍","🤩",
-            "😘","😗","☺","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑",
-            "😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶",
-            "🥴","😵","🤯","🤠","🥳"};
-
-    String[] secondEmoji = {"😎","🤓","🧐","😕","😟","🙁","☹","😮","😯","😲","😳","🥺","😦","😧","😨",
-            "😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","🤬","😈","👿","💀",
-            "☠","💩","🤡","👹","👺","👻","👽","👾","🤖","😺","😸","😹","😻","😼","😽","🙀","😿","😾",
-            "🙈","🙉","🙊","💋","💌","💘","💝","💖"};
-
-    String[] thirdEmoji = {"💗","💓","💞","💕","💟","❣","💔","❤","🧡","💛","💚","💙","💜","🤎","🖤",
-            "🤍","💯","💢","💥","💫","💦","💨","🕳","💣","💬","👁️","‍🗨️","🗨","🗯","💭","💤","👋","🤚",
-            "🖐","✋","🖖","👌","🤏","✌","🤞","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝","👍","👎",
-            "✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝"};
-
-    String[] fourthEmoji = {"🙏","✍","💅","🤳","💪","🦾","🦿","🦵","🦶","👂","🦻","👃","🧠","🦷","🦴",
-            "👀","👁","👅","👄","👶","🧒","👦","👧","🧑","👱","👨","🧔","👨‍🦰‍","👨‍🦱","👨‍🦳","👨‍🦲","👩",
-            "👩‍🦰","🧑‍🦰","👩‍🦱","🧑‍🦱","👩‍🦳","🧑‍🦳","👩‍🦲","👱‍♀️","👱‍♂️","🧓","👴","👵","🙍","🙍‍♂️",
-            "🙍‍♀️","🙎","🙎‍♂️","🙎‍♀️","🙅","🙅‍♂️","🙅‍♀️","🙆","🙆‍♂️","🙆‍♀️","💁","💁‍♂️","💁‍♀️"};;
 
     //get all the children inside the viewgroup (last children of the tree)
     private List<View> getAllChildren(View v) {
@@ -70,32 +150,42 @@ public class KhmerKeyboard extends InputMethodService {
         return result;
     }
 
-
     @Override
     public View onCreateInputView() {
+
+        System.out.println("started");
 
         ViewGroup keyboardView = (ViewGroup)getLayoutInflater().inflate(R.layout.keyboard_layout, null);
         ViewGroup charSets = (ViewGroup) keyboardView.findViewById(R.id.char_sets);
 
-        final TextView key123 = keyboardView.findViewById(R.id.key123);
-        final TextView keyKorKhor = keyboardView.findViewById(R.id.keyKorKhor);
-        final TextView keyFullStop = keyboardView.findViewById(R.id.keyFullStop);
-        final TextView keyQuestionMark = keyboardView.findViewById(R.id.keyQuestionMark);
+//        final TextView key123 = keyboardView.findViewById(R.id.key123);
+//        final TextView keyKorKhor = keyboardView.findViewById(R.id.keyKorKhor);
         View keySpace = keyboardView.findViewById(R.id.keySpace);
-        ImageView keyBackspace = keyboardView.findViewById(R.id.backspace);
-        ImageView  keyReturn = keyboardView.findViewById(R.id.returnKey);
-        ImageView keyEmoji = keyboardView.findViewById(R.id.emoji);
-        ImageView keyLanguage = keyboardView.findViewById(R.id.language);
+        View keyBackspace = keyboardView.findViewById(R.id.backspace);
+        View  keyReturn = keyboardView.findViewById(R.id.returnKey);
+//        View keyEmoji = keyboardView.findViewById(R.id.emoji);
+        final View setting = keyboardView.findViewById(R.id.setting);
+
+
+        //get all view from layout
         ArrayList<View> allView = (ArrayList<View>) getAllChildren(charSets);
+
+
+
 
         final ArrayList<TextView> allTextView = new ArrayList<>(); // store only the TextView (the characters)
         final ArrayList<View> allFrameLayout = new ArrayList<>(); //store key of the keybaord
 
-        for (int i = 0; i < allView.size(); i++) //get TextView from the layout
+        for (int i = 0; i < allView.size(); i++) //get TextView from the layout {total 85 need only 82}
         {
-            allTextView.add((TextView) allView.get(i));
+            if (allView.get(i) instanceof TextView)
+            allTextView.add((TextView)allView.get(i));
 
         }
+
+        System.out.println(allTextView.size());
+        System.out.println(charAll.length);
+
 
         for (int i = 0; i < allView.size(); i++) //get key from the layout
         {
@@ -105,12 +195,21 @@ public class KhmerKeyboard extends InputMethodService {
             }
         }
 
+        System.out.println(allFrameLayout.size());
+
 
         //default layout
-        for (int i = 0; i<allTextView.size(); i++)
+        for (int i = 0; i<81; i++)
         {
-            allTextView.get(i).setText(firstLayoutChars[i]);
+            allTextView.get(i).setText(charAll[i]);
         }
+
+
+
+
+
+
+
 
         int k = 1;
 
@@ -119,27 +218,12 @@ public class KhmerKeyboard extends InputMethodService {
         {
 
             final int j = k;
-//            allFrameLayout.get(i).setOnTouchListener(new View.OnTouchListener() {
-//                @Override
-//                public boolean onTouch(View view, MotionEvent event) {
-//
-//                    if (event.getAction() == MotionEvent.ACTION_DOWN)
-//                    {
-//                        InputConnection ic = getCurrentInputConnection();
-//                        ic.commitText((CharSequence)allTextView.get(j).getText(), 1);
-//                        System.out.println("pressed");
-//                    }
-//                    else if (event.getAction() == MotionEvent.ACTION_UP)
-//                        System.out.println("released");
-//                    // TODO Auto-generated method stub
-//                    return false;
-//                }
-//            });
             allFrameLayout.get(i).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) { //on click listener
                     InputConnection ic = getCurrentInputConnection();
                     ic.commitText((CharSequence)allTextView.get(j).getText(), 1);
+                    inputString.append((CharSequence)allTextView.get(j).getText());
                 }
             });
             k += 2;
@@ -147,40 +231,53 @@ public class KhmerKeyboard extends InputMethodService {
                 public boolean onSwipeTop() { // swipeUp listener
                     InputConnection ic = getCurrentInputConnection();
                     ic.commitText((CharSequence)allTextView.get(j-1).getText(), 1);
+                    inputString.append((CharSequence)allTextView.get(j).getText());
+
                     return true;
                 }
             });
         }
+
+
+
         //change layout to the second layout
-        key123.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                for (int i = 0; i< allTextView.size(); i++)
-                {
-                    allTextView.get(i).setText(secondLayoutChars[i]);
-                }
-                key123.setVisibility(View.GONE);
-                keyKorKhor.setVisibility(View.VISIBLE);
-                keyFullStop.setVisibility(View.GONE);
-                keyQuestionMark.setVisibility(View.VISIBLE);
+//        key123.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                for (int i = 0; i< allTextView.size(); i++)
+//                {
+//                    allTextView.get(i).setText(secondLayoutChars[i]);
+//                }
+//                key123.setVisibility(View.GONE);
+//                keyKorKhor.setVisibility(View.VISIBLE);
+//                keyFullStop.setVisibility(View.GONE);
+//                keyQuestionMark.setVisibility(View.VISIBLE);
+//                keyLanguage.setVisibility(View.VISIBLE);
+//                prviousEmoji.setVisibility(View.GONE);
+//                nextEmoji.setVisibility(View.GONE);
+//            }
+//        });
 
-            }
-        });
+
+
         //change layout to the first layout
-        keyKorKhor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                for (int i = 0; i<allTextView.size(); i++)
-                {
-                    allTextView.get(i).setText(firstLayoutChars[i]);
-                }
-                keyKorKhor.setVisibility(View.GONE);
-                key123.setVisibility(View.VISIBLE);
-                keyQuestionMark.setVisibility(View.GONE);
-                keyFullStop.setVisibility(View.VISIBLE);
-
-            }
-        });
+//        keyKorKhor.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                for (int i = 0; i<allTextView.size(); i++)
+//                {
+//                    allTextView.get(i).setText(firstLayoutChars[i]);
+//                }
+//                keyKorKhor.setVisibility(View.GONE);
+//                key123.setVisibility(View.VISIBLE);
+//                keyQuestionMark.setVisibility(View.GONE);
+//                keyFullStop.setVisibility(View.VISIBLE);
+//                keyLanguage.setVisibility(View.VISIBLE);
+//                prviousEmoji.setVisibility(View.GONE);
+//                nextEmoji.setVisibility(View.GONE);
+//
+//            }
+//        });
 
         //submit key event (Enter | Return | Done)
         keyReturn.setOnClickListener(new View.OnClickListener() {
@@ -188,6 +285,7 @@ public class KhmerKeyboard extends InputMethodService {
             public void onClick(View view) {
                 InputConnection ic = getCurrentInputConnection();
                 ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+                inputString.delete(0, inputString.length()-1);
             }
         });
 
@@ -196,6 +294,9 @@ public class KhmerKeyboard extends InputMethodService {
             public void onClick(View view) {
                 InputConnection ic = getCurrentInputConnection();
                 ic.deleteSurroundingText(1,0);
+                int curPos = ic.getTextBeforeCursor(300,0).length();
+                inputString.deleteCharAt(curPos);
+//                inputString.deleteCharAt(inputString.length()-1);
             }
         });
 
@@ -208,7 +309,7 @@ public class KhmerKeyboard extends InputMethodService {
         });
 
         //switch keyboard
-        keyLanguage.setOnClickListener(new View.OnClickListener() {
+        setting.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 InputMethodManager imeManager = (InputMethodManager) getApplicationContext().getSystemService(INPUT_METHOD_SERVICE);
@@ -216,29 +317,25 @@ public class KhmerKeyboard extends InputMethodService {
             }
         });
 
-        //change to emoji layout
-        keyEmoji.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
 
-            }
-        });
 
-        keyFullStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                InputConnection ic = getCurrentInputConnection();
-                ic.commitText("។",1);
-            }
-        });
 
-        keyQuestionMark.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                InputConnection ic = getCurrentInputConnection();
-                ic.commitText("?",1);
-            }
-        });
+
+        //change to default emoji layout
+//        keyEmoji.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                keyLanguage.setVisibility(View.GONE);
+//                prviousEmoji.setVisibility(View.VISIBLE);
+//                nextEmoji.setVisibility(View.VISIBLE);
+//                for (int i = 0; i<allTextView.size(); i++)
+//                {
+//                    allTextView.get(i).setText(emojis[emoLayoutNum][i]);
+//                }
+//
+//            }
+//        });
+
 
 
 
