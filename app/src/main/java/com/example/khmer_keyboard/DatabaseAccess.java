@@ -33,7 +33,7 @@ public class DatabaseAccess {
 
     //open database
     public void open(){
-        this.db = openHelper.getReadableDatabase();
+        this.db = openHelper.getWritableDatabase();
 
     }
 
@@ -48,20 +48,23 @@ public class DatabaseAccess {
 
     //query and return from database
 
-    public String getFullWord(String word){
-        c=db.rawQuery("select Definition From Test Where Word = '"+word+"'", new String[]{});
-//        List<String> data = new ArrayList<>();
-//        while (c.moveToNext()){
-//            String def = c.getString(0);
-//            data.add(def);
-//        }
-
-        StringBuffer buffer = new StringBuffer();
+    public List<String> getSuggestion(StringBuffer word, boolean isAutoComplete){
+        String query;
+        if (isAutoComplete){
+            query = "SELECT Word FROM Table1 WHERE Word LIKE  '"+word+'%'+"' ORDER BY Priority LIMIT 3";
+        }
+        else {
+            query = "SELECT Word2 FROM NextWord WHERE Word1 ='"+word+"' ORDER BY Priority LIMIT 3";
+        }
+        c=db.rawQuery(query , new String[]{});
+        List<String> data = new ArrayList<>();
         while (c.moveToNext()){
             String def = c.getString(0);
-            buffer.append(""+def);
+            data.add(def);
         }
-        return buffer.toString();
+        return data;
+
     }
+
 
 }

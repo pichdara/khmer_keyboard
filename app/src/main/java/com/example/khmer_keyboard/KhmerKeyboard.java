@@ -1,26 +1,23 @@
 package com.example.khmer_keyboard;
 
 import android.inputmethodservice.InputMethodService;
+import android.util.Log;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.ExtractedText;
-import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 
 public class KhmerKeyboard extends InputMethodService {
 
-    int emoLayoutNum = 0;
-    StringBuffer inputString = new StringBuffer();
+    StringBuffer inputString;
+    ViewGroup suggestionRow;
+    boolean isAutoComplete = true;
+    InputConnection ic;
 
 
 
@@ -124,20 +121,48 @@ public class KhmerKeyboard extends InputMethodService {
 
     String[] charAll = {"1","១","2","២","3","៣","១","៤","5","៥","6","៦","7","៧","8","៨","9","៩","១","០","ឥ","ឦ","ឲ","ឪ",
             "ឈ","ឆ","ឺ","ឹ","ែ","េ","ឬ","ឬ","ទ","ត","ួ","យ","ូ","ុ","ី","ិ","ៅ","ោ","ភ","ផ","ឿ","ៀ","ឧ","ឪ",
-            "ាំ","ា","ៃ","ស","ឌ","ដ","ធ","ថ","អ","ង","ះ","ហ","ញ","្","គ","ក","ឡ","ល","ើ","ោះ","៉","់","ឭ","ឮ",
+            "ាំ","ា","ៃ","ស","ឌ","ដ","ធ","ថ","អ","ង","ះ","ហ","ញ","្","គ","ក","ឡ","ល","ោះ","ើ","៉","់","ឭ","ឮ",
             "ឍ","ឋ","ឃ","ខ","ជ","ច","េះ","វ","ព","ប","ណ","ន","ំ","ម","ុះ","ុំ","។","៕","?","៊"};
 
+
+
+    //display text into suggestion row
+    private void setSuggestionText(StringBuffer inputString1, ArrayList<TextView> sugTextView){
+        if (inputString1.length() == 0){
+            suggestionRow.setVisibility(View.INVISIBLE);
+        }
+        else {
+            suggestionRow.setVisibility(View.VISIBLE);
+            List<String> suggest = query(inputString1);
+            for (int a = 0; a < suggest.size(); a++){
+                sugTextView.get(a).setText(suggest.get(a));
+            }
+        }
+
+    }
+
+
+
+
+    //query top 3 suggestion word from database
+    private List<String> query (StringBuffer word){
+        DatabaseAccess dbAccess = DatabaseAccess.getInstance(getApplicationContext());
+        dbAccess.open();
+        List<String> suggestion = dbAccess.getSuggestion(word, isAutoComplete);
+        dbAccess.close();
+        return suggestion;
+    }
 
     //get all the children inside the viewgroup (last children of the tree)
     private List<View> getAllChildren(View v) {
 
         if (!(v instanceof ViewGroup)) {
-            ArrayList<View> viewArrayList = new ArrayList<View>();
+            ArrayList<View> viewArrayList = new ArrayList<>();
             viewArrayList.add(v);
             return viewArrayList;
         }
 
-        ArrayList<View> result = new ArrayList<View>();
+        ArrayList<View> result = new ArrayList<>();
 
         ViewGroup viewGroup = (ViewGroup) v;
         for (int i = 0; i < viewGroup.getChildCount(); i++) {
@@ -153,28 +178,48 @@ public class KhmerKeyboard extends InputMethodService {
     @Override
     public View onCreateInputView() {
 
-        System.out.println("started");
+        inputString = new StringBuffer();
 
+        Log.d("PIUKeyboard", "Keyboard started");
+
+        ic = getCurrentInputConnection();
         ViewGroup keyboardView = (ViewGroup)getLayoutInflater().inflate(R.layout.keyboard_layout, null);
-        ViewGroup charSets = (ViewGroup) keyboardView.findViewById(R.id.char_sets);
-
-//        final TextView key123 = keyboardView.findViewById(R.id.key123);
-//        final TextView keyKorKhor = keyboardView.findViewById(R.id.keyKorKhor);
+        ViewGroup charSets = keyboardView.findViewById(R.id.char_sets);
+        suggestionRow = keyboardView.findViewById(R.id.suggestions);
         View keySpace = keyboardView.findViewById(R.id.keySpace);
         View keyBackspace = keyboardView.findViewById(R.id.backspace);
         View  keyReturn = keyboardView.findViewById(R.id.returnKey);
-//        View keyEmoji = keyboardView.findViewById(R.id.emoji);
         final View setting = keyboardView.findViewById(R.id.setting);
 
-
-        //get all view from layout
+        //get all view from layout exclude suggestion row
         ArrayList<View> allView = (ArrayList<View>) getAllChildren(charSets);
 
+        //suggestion row
 
+        //store suggestion textView
+        final ArrayList<TextView> sugTextView = new ArrayList<>();
 
+        //store suggestion key
+        final ArrayList<View> suggestionKey = new ArrayList<>();
+
+        //get view from suggestion row
+        final ArrayList<View> suggestionsView = (ArrayList<View>) getAllChildren(suggestionRow);
+
+        //get only TextView of the suggestion row
+        for (int i = 0; i < suggestionsView.size(); i++)
+        {
+            if (suggestionsView.get(i) instanceof TextView)
+                sugTextView.add((TextView)suggestionsView.get(i));
+
+        }
+
+        //get key of each suggestion
+        for (int i = 0; i<suggestionsView.size(); i++){
+            suggestionKey.add((View) suggestionsView.get(i).getParent());
+        }
 
         final ArrayList<TextView> allTextView = new ArrayList<>(); // store only the TextView (the characters)
-        final ArrayList<View> allFrameLayout = new ArrayList<>(); //store key of the keybaord
+        final ArrayList<View> allFrameLayout = new ArrayList<>(); //store key of the keyboard
 
         for (int i = 0; i < allView.size(); i++) //get TextView from the layout {total 85 need only 82}
         {
@@ -183,10 +228,6 @@ public class KhmerKeyboard extends InputMethodService {
 
         }
 
-        System.out.println(allTextView.size());
-        System.out.println(charAll.length);
-
-
         for (int i = 0; i < allView.size(); i++) //get key from the layout
         {
             if (i % 2 != 0)
@@ -194,8 +235,6 @@ public class KhmerKeyboard extends InputMethodService {
                 allFrameLayout.add((View) allView.get(i).getParent());
             }
         }
-
-        System.out.println(allFrameLayout.size());
 
 
         //default layout
@@ -215,69 +254,29 @@ public class KhmerKeyboard extends InputMethodService {
             allFrameLayout.get(i).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) { //on click listener
-                    InputConnection ic = getCurrentInputConnection();
-                    ic.commitText((CharSequence)allTextView.get(j).getText(), 1);
-                    inputString.append((CharSequence)allTextView.get(j).getText());
+                    isAutoComplete = true;
+                    ic.commitText(allTextView.get(j).getText(), 1);
+                    inputString.append(allTextView.get(j).getText());
+                    setSuggestionText(inputString, sugTextView);
                 }
             });
             k += 2;
             allFrameLayout.get(i).setOnTouchListener(new OnSwipeTouchListener(){
                 public boolean onSwipeTop() { // swipeUp listener
-                    InputConnection ic = getCurrentInputConnection();
-                    ic.commitText((CharSequence)allTextView.get(j-1).getText(), 1);
-                    inputString.append((CharSequence)allTextView.get(j).getText());
-
+                    isAutoComplete = true;
+                    ic.commitText(allTextView.get(j-1).getText(), 1);
+                    inputString.append(allTextView.get(j).getText());
+                    setSuggestionText(inputString, sugTextView);
                     return true;
                 }
             });
         }
 
 
-
-        //change layout to the second layout
-//        key123.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                for (int i = 0; i< allTextView.size(); i++)
-//                {
-//                    allTextView.get(i).setText(secondLayoutChars[i]);
-//                }
-//                key123.setVisibility(View.GONE);
-//                keyKorKhor.setVisibility(View.VISIBLE);
-//                keyFullStop.setVisibility(View.GONE);
-//                keyQuestionMark.setVisibility(View.VISIBLE);
-//                keyLanguage.setVisibility(View.VISIBLE);
-//                prviousEmoji.setVisibility(View.GONE);
-//                nextEmoji.setVisibility(View.GONE);
-//            }
-//        });
-
-
-
-        //change layout to the first layout
-//        keyKorKhor.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                for (int i = 0; i<allTextView.size(); i++)
-//                {
-//                    allTextView.get(i).setText(firstLayoutChars[i]);
-//                }
-//                keyKorKhor.setVisibility(View.GONE);
-//                key123.setVisibility(View.VISIBLE);
-//                keyQuestionMark.setVisibility(View.GONE);
-//                keyFullStop.setVisibility(View.VISIBLE);
-//                keyLanguage.setVisibility(View.VISIBLE);
-//                prviousEmoji.setVisibility(View.GONE);
-//                nextEmoji.setVisibility(View.GONE);
-//
-//            }
-//        });
-
         //submit key event (Enter | Return | Done)
         keyReturn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                InputConnection ic = getCurrentInputConnection();
                 ic.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
                 inputString.delete(0, inputString.length()-1);
             }
@@ -286,19 +285,23 @@ public class KhmerKeyboard extends InputMethodService {
         keyBackspace.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                InputConnection ic = getCurrentInputConnection();
                 ic.deleteSurroundingText(1,0);
                 int curPos = ic.getTextBeforeCursor(300,0).length();
-                inputString.deleteCharAt(curPos);
-//                inputString.deleteCharAt(inputString.length()-1);
+                Log.d("PIUKeyboard", "CurrentPosition: "+curPos);
+                if (inputString.length() > 0){
+                    inputString.deleteCharAt(curPos);
+                    Log.d("PIUKeyboard", "inputString Value: " + inputString);
+                }
+                setSuggestionText(inputString, sugTextView);
             }
         });
 
         keySpace.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                InputConnection ic = getCurrentInputConnection();
+
                 ic.commitText(" ", 1);
+                inputString.append(" ");
             }
         });
 
@@ -311,27 +314,34 @@ public class KhmerKeyboard extends InputMethodService {
             }
         });
 
+        int l=0;
 
+        //select Text from Suggestion row into Text area
+        for (int i = 0; i < suggestionsView.size(); i++){
+            final int b = l;
+            suggestionKey.get(i).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
 
-
-
-        //change to default emoji layout
-//        keyEmoji.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                keyLanguage.setVisibility(View.GONE);
-//                prviousEmoji.setVisibility(View.VISIBLE);
-//                nextEmoji.setVisibility(View.VISIBLE);
-//                for (int i = 0; i<allTextView.size(); i++)
-//                {
-//                    allTextView.get(i).setText(emojis[emoLayoutNum][i]);
-//                }
-//
-//            }
-//        });
-
-
-
+                    //auto complete
+                    if (isAutoComplete){
+                        ic.deleteSurroundingText(inputString.length(),0);
+                        inputString = new StringBuffer(sugTextView.get(b).getText());
+                        ic.commitText(inputString, 1);
+                        Log.d("PIUKeyboard", "inputString value:" +inputString.length()+" ");
+                        isAutoComplete = false;
+                    }
+                    //next word
+                    else{
+                        ic.commitText(sugTextView.get(b).getText(), 1);
+                        inputString.append(sugTextView.get(b).getText());
+                        Log.d("PIUKeyboard", "inputString value:" +inputString.length()+" ");
+                    }
+                    setSuggestionText( new StringBuffer(sugTextView.get(b).getText().toString()) , sugTextView);
+                }
+            });
+            l++;
+        }
 
         return keyboardView;
     }
