@@ -18,6 +18,7 @@ public class KhmerKeyboard extends InputMethodService {
     ViewGroup suggestionRow;
     boolean isAutoComplete = true;
     InputConnection ic;
+    int curPos;
 
 
 
@@ -142,8 +143,6 @@ public class KhmerKeyboard extends InputMethodService {
     }
 
 
-
-
     //query top 3 suggestion word from database
     private List<String> query (StringBuffer word){
         DatabaseAccess dbAccess = DatabaseAccess.getInstance(getApplicationContext());
@@ -173,6 +172,15 @@ public class KhmerKeyboard extends InputMethodService {
             result.addAll(getAllChildren(child));
         }
         return result;
+    }
+
+
+    //update priority
+    void updatePriority(String word){
+        DatabaseAccess dbAccess = DatabaseAccess.getInstance(getApplicationContext());
+        dbAccess.open();
+        dbAccess.updatePrio(word);
+        dbAccess.close();
     }
 
     @Override
@@ -243,7 +251,6 @@ public class KhmerKeyboard extends InputMethodService {
             allTextView.get(i).setText(charAll[i]);
         }
 
-
         int k = 1;
 
         //get text from the key to the text area
@@ -272,7 +279,6 @@ public class KhmerKeyboard extends InputMethodService {
             });
         }
 
-
         //submit key event (Enter | Return | Done)
         keyReturn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -285,23 +291,42 @@ public class KhmerKeyboard extends InputMethodService {
         keyBackspace.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                isAutoComplete = true;
                 ic.deleteSurroundingText(1,0);
-                int curPos = ic.getTextBeforeCursor(300,0).length();
+                curPos = ic.getTextBeforeCursor(300,0).length();
                 Log.d("PIUKeyboard", "CurrentPosition: "+curPos);
+
                 if (inputString.length() > 0){
+                    if (curPos>inputString.length()){
+                        curPos = inputString.length()-1;
+                    }
                     inputString.deleteCharAt(curPos);
-                    Log.d("PIUKeyboard", "inputString Value: " + inputString);
+//                    Log.d("PIUKeyboard", "inputString Value: " + inputString);
+
                 }
                 setSuggestionText(inputString, sugTextView);
+                Log.d("PIUKeyboard", "inputString Value: " + inputString);
+
             }
         });
 
         keySpace.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                CharSequence textBeforeCursor = ic.getTextBeforeCursor(1, 0);
+                Log.d("PIUKeyboard", "text before cursor: "+textBeforeCursor);
+                if (textBeforeCursor.toString().equals(" ")){
+//                    Log.d("PIUKeyboard", "input String value:"+inputString);
 
-                ic.commitText(" ", 1);
-                inputString.append(" ");
+                    inputString = new StringBuffer();
+                    Log.d("PIUKeyboard", "input String has been renewed");
+                }
+                else {
+                    ic.commitText(" ", 1);
+                    inputString.append(" ");
+                }
+                Log.d("PIUKeyboard", "input String value:"+inputString);
+
             }
         });
 
@@ -329,6 +354,7 @@ public class KhmerKeyboard extends InputMethodService {
                         inputString = new StringBuffer(sugTextView.get(b).getText());
                         ic.commitText(inputString, 1);
                         Log.d("PIUKeyboard", "inputString value:" +inputString.length()+" ");
+                        updatePriority((String) sugTextView.get(b).getText());
                         isAutoComplete = false;
                     }
                     //next word
@@ -338,6 +364,7 @@ public class KhmerKeyboard extends InputMethodService {
                         Log.d("PIUKeyboard", "inputString value:" +inputString.length()+" ");
                     }
                     setSuggestionText( new StringBuffer(sugTextView.get(b).getText().toString()) , sugTextView);
+                    updatePriority((String) sugTextView.get(b).getText());
                 }
             });
             l++;

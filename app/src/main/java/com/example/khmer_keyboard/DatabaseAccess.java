@@ -1,5 +1,6 @@
 package com.example.khmer_keyboard;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -21,6 +22,9 @@ public class DatabaseAccess {
         this.openHelper = new DatabaseOpenHelper(context);
 
     }
+
+
+
 
     //to return the single instance of the database
 
@@ -64,6 +68,19 @@ public class DatabaseAccess {
         }
         return data;
 
+    }
+
+    void updatePrio(String word){
+        c=db.rawQuery("SELECT Priority FROM Table1 WHERE Word ='"+word+"' LIMIT 1" , new String[]{});
+        int oldPrio = 0;
+        while (c.moveToNext()){
+            oldPrio = c.getInt(0);
+        }
+        oldPrio++;
+        ContentValues cv = new ContentValues();
+        cv.put("Priority", oldPrio);
+
+        db.update("Table1",cv,"Word = '"+word+"'", new String[]{});
     }
 
 
