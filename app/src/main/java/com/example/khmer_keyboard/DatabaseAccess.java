@@ -55,10 +55,10 @@ public class DatabaseAccess {
     public List<String> getSuggestion(StringBuffer word, boolean isAutoComplete){
         String query;
         if (isAutoComplete){
-            query = "SELECT Word FROM Table1 WHERE Word LIKE  '"+word+'%'+"' ORDER BY Priority LIMIT 3";
+            query = "SELECT Word FROM Table1 WHERE Word LIKE  '"+word+'%'+"' ORDER BY Priority DESC LIMIT 3";
         }
         else {
-            query = "SELECT Word2 FROM NextWord WHERE Word1 ='"+word+"' ORDER BY Priority LIMIT 3";
+            query = "SELECT Word2 FROM NextWord WHERE Word1 ='"+word+"' ORDER BY Priority DESC LIMIT 3";
         }
         c=db.rawQuery(query , new String[]{});
         List<String> data = new ArrayList<>();
