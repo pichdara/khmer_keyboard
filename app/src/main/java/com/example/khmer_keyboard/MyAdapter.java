@@ -5,10 +5,38 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
+
+//    private List<View> getAllChildren(View v) {
+//
+//        if (!(v instanceof ViewGroup)) {
+//            ArrayList<View> viewArrayList = new ArrayList<>();
+//            viewArrayList.add(v);
+//            return viewArrayList;
+//        }
+//
+//        ArrayList<View> result = new ArrayList<>();
+//
+//        ViewGroup viewGroup = (ViewGroup) v;
+//        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+//
+//            View child = viewGroup.getChildAt(i);
+//
+//            //Do not add any parents, just add child elements
+//            result.addAll(getAllChildren(child));
+//        }
+//        return result;
+//    }
+
+
+
+
     private final String[] mDataset;
 
     // Provide a reference to the views for each data item
@@ -48,7 +76,10 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     public void onBindViewHolder(MyViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-//        holder.textView.setText(mDataset[position]);
+
+
+
+        holder.textView.setText(mDataset[position]);
 
     }
 

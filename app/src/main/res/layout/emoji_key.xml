@@ -2,19 +2,19 @@
 
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingLeft="3dp"
-        android:paddingRight="5dp">
+        android:paddingHorizontal="2dp"
+    android:paddingVertical="2dp">
 
             <TextView
                 android:id="@+id/textVieww"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="jxcfv"
-                android:textColor="@android:color/holo_red_dark"
                 android:textSize="15sp"/>
+
 
 
     </LinearLayout>

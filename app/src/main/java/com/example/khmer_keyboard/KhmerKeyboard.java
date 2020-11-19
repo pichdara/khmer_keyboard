@@ -10,6 +10,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -216,16 +217,8 @@ public class KhmerKeyboard extends InputMethodService {
     @Override
     public View onCreateInputView() {
 
-        view = getLayoutInflater().inflate(R.layout.keyboard_layout, null);
-        recyclerView = view.findViewById(R.id.myRecylerView);
-        recyclerView.setHasFixedSize(true);
 
-        layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
 
-        mAdapter = new MyAdapter(emo);
-        recyclerView.setAdapter(mAdapter);
-        Log.d("PIUKeyboard", "Set adapter: ");
 
 
 
@@ -241,6 +234,18 @@ public class KhmerKeyboard extends InputMethodService {
         View keyBackspace = keyboardView.findViewById(R.id.backspace);
         View  keyReturn = keyboardView.findViewById(R.id.returnKey);
         final View setting = keyboardView.findViewById(R.id.setting);
+
+
+
+        recyclerView = keyboardView.findViewById(R.id.myRecylerView);
+        recyclerView.setHasFixedSize(true);
+
+        layoutManager = new GridLayoutManager(this, 9);
+        recyclerView.setLayoutManager(layoutManager);
+
+        mAdapter = new MyAdapter(emo);
+        recyclerView.setAdapter(mAdapter);
+        Log.d("PIUKeyboard", "Set adapter: ");
 
         //get all view from layout exclude suggestion row
         ArrayList<View> allView = (ArrayList<View>) getAllChildren(charSets);
