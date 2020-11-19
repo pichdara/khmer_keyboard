@@ -1527,9 +1527,9 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/myRecylerView"
-
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="#63686e"
             android:scrollbars="vertical" />
 
         <LinearLayout
