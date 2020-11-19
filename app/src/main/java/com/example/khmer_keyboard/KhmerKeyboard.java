@@ -155,6 +155,9 @@ public class KhmerKeyboard extends InputMethodService {
             "ឈ","ឆ","ឺ","ឹ","ែ","េ","ឬ","រ","ទ","ត","ួ","យ","ូ","ុ","ី","ិ","ៅ","ោ","ភ","ផ","ឿ","ៀ","ឧ","ឪ",
             "ាំ","ា","ៃ","ស","ឌ","ដ","ធ","ថ","អ","ង","ះ","ហ","ញ","​​​្","គ","ក","ឡ","ល","ោះ","ើ","​​៉","់","ឭ","ឮ",
             "ឍ","ឋ","ឃ","ខ","ជ","ច","េះ","វ","ព","ប","ណ","ន","ំ","ម","ុះ","ុំ","។","៕","?","​​៊"};
+    String[] secondLayout ={"1","2","3","4","5","6","7","8","9","0","(",")","#","-","+","*","^",
+            "/","|","\\","~","=","[","]","%","<",">","&",":","/;","{","/}",".",",","/?","!","'",
+            "/","។","៕","-","@","៛","$","€","£"};
 
 
 
@@ -233,6 +236,9 @@ public class KhmerKeyboard extends InputMethodService {
         View keySpace = keyboardView.findViewById(R.id.keySpace);
         View keyBackspace = keyboardView.findViewById(R.id.backspace);
         View  keyReturn = keyboardView.findViewById(R.id.returnKey);
+        View  keyEmoji = keyboardView.findViewById(R.id.emoji);
+        View key123 = keyboardView.findViewById(R.id.key123);
+
         final View setting = keyboardView.findViewById(R.id.setting);
 
 
@@ -417,6 +423,19 @@ public class KhmerKeyboard extends InputMethodService {
             });
             l++;
         }
+        keyEmoji.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                recyclerView.setVisibility(View.VISIBLE);
+            }
+        });
+
+        key123.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
 
         return keyboardView;
     }
